@@ -19,7 +19,7 @@ public class TestMotors {
         Motor.A.forward();
         Motor.B.forward();
 
-        Delay.msDelay(10000);  // Spin for 10 seconds
+        Delay.msDelay(10000);  // Spinning for 10 seconds
 
         Motor.A.stop(true);  // Stop motors
         Motor.B.stop();
