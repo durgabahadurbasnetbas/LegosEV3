@@ -1,4 +1,4 @@
-// Source code is decompiled from a .class file using FernFlower decompiler.
+// Infinite forward-backward motion with object detection
 package MotorsSpin;
 
 import lejos.hardware.Button;
@@ -10,37 +10,73 @@ import lejos.robotics.SampleProvider;
 import lejos.utility.Delay;
 
 public class TestMotors {
-   public TestMotors() {
-   }
+    public static void main(String[] args) {
+        // Setup ultrasonic sensor
+        EV3UltrasonicSensor usSensor = new EV3UltrasonicSensor(SensorPort.S1);
+        SampleProvider distanceProvider = usSensor.getDistanceMode();
+        float[] sample = new float[distanceProvider.sampleSize()];
 
-   public static void main(String[] var0) {
-      EV3UltrasonicSensor var1 = new EV3UltrasonicSensor(SensorPort.S1);
-      SampleProvider var2 = var1.getDistanceMode();
-      float[] var3 = new float[var2.sampleSize()];
-      LCD.clear();
-      LCD.drawString("Press button", 0, 0);
-      LCD.drawString("to start...", 0, 1);
-      Button.waitForAnyPress();
+        LCD.clear();
+        LCD.drawString("Press button", 0, 0);
+        LCD.drawString("to start...", 0, 1);
+        Button.waitForAnyPress();
 
-        // Set motor speed first
-        Motor.A.setSpeed(500);
-        Motor.B.setSpeed(500);
+        while (true) { // Infinite loop
+            // Move Forward
+            LCD.clear();
+            LCD.drawString("Moving forward...", 0, 0);
+            Motor.A.setSpeed(500);
+            Motor.B.setSpeed(500);
+            Motor.A.forward();
+            Motor.B.forward();
 
-        LCD.drawString("Motors spinning...", 0, 1);
-        Motor.A.forward();
-        Motor.B.forward();
+            long startTime = System.currentTimeMillis();
+            while (System.currentTimeMillis() - startTime < 10000) { // Up to 10 seconds
+                distanceProvider.fetchSample(sample, 0);
+                float distance = sample[0];
 
-        Delay.msDelay(10000);  // Spin for 10 seconds
+                if (distance < 0.2) { // Object detected within 20 cm
+                    Motor.A.stop(true);
+                    Motor.B.stop();
+                    LCD.clear();
+                    LCD.drawString("Obstacle ahead!", 0, 2);
+                    Delay.msDelay(500);
+                    break;
+                }
+                Delay.msDelay(50);
+            }
 
-        Motor.A.stop(true);  // Stop motors
-        Motor.B.stop();
+            Motor.A.stop(true);
+            Motor.B.stop();
+            Delay.msDelay(500);
 
-            Delay.msDelay(50L);
-         }
+            // Move Backward
+            LCD.clear();
+            LCD.drawString("Moving backward...", 0, 0);
+            Motor.A.backward();
+            Motor.B.backward();
 
-         Motor.A.stop(true);
-         Motor.B.stop();
-         Delay.msDelay(500L);
-      }
-   }
+            startTime = System.currentTimeMillis();
+            while (System.currentTimeMillis() - startTime < 10000) { // Up to 10 seconds
+                distanceProvider.fetchSample(sample, 0);
+                float distance = sample[0];
+
+                if (distance < 0.2) { // Object detected within 20 cm
+                    Motor.A.stop(true);
+                    Motor.B.stop();
+                    LCD.clear();
+                    LCD.drawString("Obstacle behind!", 0, 2);
+                    Delay.msDelay(500);
+                    break;
+                }
+                Delay.msDelay(50);
+            }
+
+            Motor.A.stop(true);
+            Motor.B.stop();
+            Delay.msDelay(500);
+
+            // After backward motion, loop again (forward-backward infinitely)
+        }
+    }
 }
