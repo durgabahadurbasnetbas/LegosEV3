@@ -22,51 +22,18 @@ public class TestMotors {
       LCD.drawString("to start...", 0, 1);
       Button.waitForAnyPress();
 
-      while(true) {
-         LCD.clear();
-         LCD.drawString("Moving forward...", 0, 0);
-         Motor.A.setSpeed(500);
-         Motor.B.setSpeed(500);
-         Motor.A.forward();
-         Motor.B.forward();
-         long var4 = System.currentTimeMillis();
+        // Set motor speed first
+        Motor.A.setSpeed(500);
+        Motor.B.setSpeed(500);
 
-         float var6;
-         while(System.currentTimeMillis() - var4 < 10000L) {
-            var2.fetchSample(var3, 0);
-            var6 = var3[0];
-            if ((double)var6 < 0.2) {
-               Motor.A.stop(true);
-               Motor.B.stop();
-               LCD.clear();
-               LCD.drawString("Obstacle ahead!", 0, 2);
-               Delay.msDelay(500L);
-               break;
-            }
+        LCD.drawString("Motors spinning...", 0, 1);
+        Motor.A.forward();
+        Motor.B.forward();
 
-            Delay.msDelay(50L);
-         }
+        Delay.msDelay(10000);  // Spin for 10 seconds
 
-         Motor.A.stop(true);
-         Motor.B.stop();
-         Delay.msDelay(500L);
-         LCD.clear();
-         LCD.drawString("Moving backward...", 0, 0);
-         Motor.A.backward();
-         Motor.B.backward();
-         var4 = System.currentTimeMillis();
-
-         while(System.currentTimeMillis() - var4 < 10000L) {
-            var2.fetchSample(var3, 0);
-            var6 = var3[0];
-            if ((double)var6 < 0.2) {
-               Motor.A.stop(true);
-               Motor.B.stop();
-               LCD.clear();
-               LCD.drawString("Obstacle behind!", 0, 2);
-               Delay.msDelay(500L);
-               break;
-            }
+        Motor.A.stop(true);  // Stop motors
+        Motor.B.stop();
 
             Delay.msDelay(50L);
          }
