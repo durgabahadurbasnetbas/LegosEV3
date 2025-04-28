@@ -1,84 +1,73 @@
 package line;
-import lejos.hardware.motor.Motor;
-import lejos.hardware.sensor.EV3ColorSensor;
-import lejos.hardware.port.SensorPort;
-import lejos.hardware.lcd.LCD;
+
 import lejos.hardware.Button;
+import lejos.hardware.lcd.LCD;
+import lejos.hardware.motor.Motor;
+import lejos.hardware.port.SensorPort;
+import lejos.hardware.sensor.EV3ColorSensor;
 import lejos.robotics.SampleProvider;
 import lejos.utility.Delay;
+
 public class linefollower {
+
     public static void main(String[] args) {
-        // Create and configure the color sensor
-        EV3ColorSensor colorSensor = new EV3ColorSensor(SensorPort.S4);
 
-        // You can try & use other modes to see the difference & feel free to use the mode that
-        // suites your needs the best, for instance, getAmbientMode(), getRedMode(), etc
-        // Here we are setting the sensor to red mode (measures reflected red light)
-        SampleProvider light = colorSensor.getRedMode();  // Use red mode for reflected light intensity
+        // Initialize the color sensor on port S2
+        EV3ColorSensor colorSensor = new EV3ColorSensor(SensorPort.S2);
+        SampleProvider redMode = colorSensor.getRedMode();  // Reflected light intensity
 
-        // Create an array to hold the sensor data
-        float[] sample = new float[light.sampleSize()];
+        float[] sample = new float[redMode.sampleSize()];
 
-        // Set motor speeds
-        Motor.A.setSpeed(300);
-        Motor.B.setSpeed(300);
+        // Set base motor speed
+        int baseSpeed = 250;
+        int turnSpeed = 150; // Speed when adjusting
 
-        // Start motors moving forward
+        Motor.A.setSpeed(baseSpeed);
+        Motor.B.setSpeed(baseSpeed);
+
+        // Start motors
         Motor.A.forward();
         Motor.B.forward();
 
-        // Continuously follow the line until a button is pressed
+        // Threshold for black detection
+        float blackThreshold = 0.25f; // You might need to calibrate this value!
+
+        LCD.clear();
+        LCD.drawString("Following Line", 0, 0);
+        Delay.msDelay(1000); // Startup delay
+
         while (!Button.ESCAPE.isDown()) {
-            // Get the current red light intensity reading from the sensor
-            light.fetchSample(sample, 0);  // 0 is the index where data will be stored
-            
-            // for debugging purposes, better to display light intensity on LCD
+            // Get current light intensity
+            redMode.fetchSample(sample, 0);
+            float lightIntensity = sample[0];
+
+            // Display the light intensity on screen
             LCD.clear();
-            LCD.drawString("Red Light Intensity: " + (int)(sample[0] * 100) + "%", 0, 0);
-            
-            // Threshold for detecting the black line
-            // NOTE: You'll most probably have to fine tune the threshold value
-            float threshold = 0.2f;  // Adjusted threshold value for the black line detection
+            LCD.drawString("Light:", 0, 0);
+            LCD.drawString((int)(lightIntensity * 100) + "%", 0, 1);
 
-            // If the light intensity is low (black line), the robot is on the line
-            if (sample[0] < threshold)
-            { 
-                Motor.A.setSpeed(300);
-                Motor.B.setSpeed(300);
-                Motor.A.forward();
-                Motor.B.forward();
-            }
-            else                        // Off the black line, adjust to turn towards the line
-            {
-                // Work on these logics. they are just for illustration purposes.
-                // The turns defined below can be inverted turns. So test yourselves and rectify accordingly
-                if (sample[0] > 0.6)
-                {
-                    // If it's very bright (white surface), turn left
-                    Motor.A.setSpeed(300);
-                    Motor.B.setSpeed(150);
-                }
-                else
-                {
-                    // If it's somewhat bright (near the edge of the line), turn right
-                    Motor.A.setSpeed(150);
-                    Motor.B.setSpeed(300);
-                }
-                Motor.A.forward();
-                Motor.B.forward();
+            // Line following behavior
+            if (lightIntensity < blackThreshold) {
+                // On black line → Go straight
+                Motor.A.setSpeed(baseSpeed);
+                Motor.B.setSpeed(baseSpeed);
+            } else {
+                // Off black line → correct back
+                // Here we make the robot turn left
+                Motor.A.setSpeed(turnSpeed);  // Left slower
+                Motor.B.setSpeed(baseSpeed);  // Right normal
             }
 
-            // Add a small delay to reduce the frequency of updates
-            Delay.msDelay(50);
+            // Move motors forward
+            Motor.A.forward();
+            Motor.B.forward();
+
+            Delay.msDelay(30); // Small delay for smoother operation
         }
 
-        // Stop the motors before exiting
+        // Stop motors and close sensor
         Motor.A.stop();
         Motor.B.stop();
-        
-        // Remember to close the sensor before exiting
         colorSensor.close();
-    }
+ }
 }
-    
-

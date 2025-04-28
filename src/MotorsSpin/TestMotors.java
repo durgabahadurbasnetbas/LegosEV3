@@ -1,4 +1,4 @@
-// Infinite forward-backward motion with object detection
+// Infinite forward-backward motion with object 
 package MotorsSpin;
 
 import lejos.hardware.Button;
